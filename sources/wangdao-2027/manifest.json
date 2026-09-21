@@ -1,0 +1,18 @@
+{
+  "title": "2027 计算机组成原理考研复习指导",
+  "file": "2027计算机组成原理_高清带书签版.pdf",
+  "pages": 340,
+  "sha256": "9621af0191cc47bb87c63d63c05e3a4df8471707b262323f1954734db54fa57a",
+  "outline_entries": 204,
+  "chapters": [
+    {"title":"第1章 计算机系统概述","start":13,"end":31},
+    {"title":"第2章 数据的表示和运算","start":32,"end":88},
+    {"title":"第3章 存储系统","start":89,"end":159},
+    {"title":"第4章 指令系统","start":160,"end":206},
+    {"title":"第5章 中央处理器","start":207,"end":285},
+    {"title":"第6章 总线","start":286,"end":302},
+    {"title":"第7章 输入/输出系统","start":303,"end":339}
+  ],
+  "outline_source": "original TOC PDF pages 8-12",
+  "text_layer": "none_or_unusable"
+}
