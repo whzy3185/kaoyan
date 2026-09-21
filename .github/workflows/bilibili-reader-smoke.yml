@@ -1,0 +1,51 @@
+name: Bilibili reader smoke test
+
+on:
+  push:
+    branches:
+      - tooling/bilibili-reader
+    paths:
+      - ".github/workflows/bilibili-reader-smoke.yml"
+      - "tools/bilibili_reader/**"
+  workflow_dispatch:
+    inputs:
+      source:
+        description: "Bilibili URL or BVID"
+        required: true
+        default: "https://www.bilibili.com/video/BV1BcXQYUEiL/"
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BILIBILI_SESSDATA: ${{ secrets.BILIBILI_SESSDATA }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install yt-dlp fallback
+        run: python -m pip install -U yt-dlp
+      - name: Fetch subtitles
+        continue-on-error: true
+        run: |
+          SOURCE="${{ github.event.inputs.source || 'https://www.bilibili.com/video/BV1BcXQYUEiL/' }}"
+          python tools/bilibili_reader/fetch_subtitles.py "$SOURCE" --out output
+      - name: Show diagnostics
+        if: always()
+        run: |
+          find output -maxdepth 2 -type f -printf '%p %s bytes\n' || true
+          test -f output/errors.txt && cat output/errors.txt || true
+          test -f output/yt-dlp.log && tail -n 120 output/yt-dlp.log || true
+          test -f output/metadata.json && cat output/metadata.json || true
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bilibili-reader-output
+          path: output/
+          if-no-files-found: warn
