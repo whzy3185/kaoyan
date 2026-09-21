@@ -102,6 +102,65 @@ jobs:
           curl -sS -X POST             -H 'Authorization: Bearer smoke-token'             -H 'Content-Type: application/json'             --data '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"parse_url","arguments":{"url":"https://www.bilibili.com/video/BV1BcXQYUEiL/","limit":20}}}'             http://127.0.0.1:23330/mcp | tee /tmp/bili23-parse.json || true
 
           echo
+          echo "=== create_download P1: audio 64K + AI subtitle txt ==="
+          mkdir -p output
+          curl -sS -X POST \
+            -H 'Authorization: Bearer smoke-token' \
+            -H 'Content-Type: application/json' \
+            --data '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"create_download","arguments":{"episode_ids":["1"],"options":{"media":"audio","audio_quality":"64K","subtitle":true,"subtitle_format":"txt","subtitle_languages":["ai-zh"]},"redownload":true}}}' \
+            http://127.0.0.1:23330/mcp | tee /tmp/bili23-create.json || true
+
+          TASK_ID="$(python - <<'PY'
+          import json
+          try:
+              d=json.load(open('/tmp/bili23-create.json',encoding='utf-8'))
+              print(d['result']['structuredContent']['tasks'][0]['task_id'])
+          except Exception:
+              print('')
+          PY
+          )"
+          echo "TASK_ID=$TASK_ID"
+
+          if [ -n "$TASK_ID" ]; then
+            for i in $(seq 1 60); do
+              curl -sS -X POST \
+                -H 'Authorization: Bearer smoke-token' \
+                -H 'Content-Type: application/json' \
+                --data "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"tools/call\",\"params\":{\"name\":\"get_task_status\",\"arguments\":{\"task_id\":\"$TASK_ID\"}}}" \
+                http://127.0.0.1:23330/mcp > /tmp/bili23-status.json || true
+              STATUS="$(python - <<'PY'
+          import json
+          try:
+              d=json.load(open('/tmp/bili23-status.json',encoding='utf-8'))
+              print(d['result']['structuredContent'].get('status',''))
+          except Exception:
+              print('')
+          PY
+              )"
+              PROGRESS="$(python - <<'PY'
+          import json
+          try:
+              d=json.load(open('/tmp/bili23-status.json',encoding='utf-8'))
+              print(d['result']['structuredContent'].get('progress',''))
+          except Exception:
+              print('')
+          PY
+              )"
+              echo "poll $i: status=$STATUS progress=$PROGRESS"
+              if [ "$STATUS" = "completed" ] || [ "$STATUS" = "error" ] || [ "$STATUS" = "failed" ]; then
+                break
+              fi
+              sleep 2
+            done
+            echo "=== final task status ==="
+            cat /tmp/bili23-status.json || true
+          fi
+
+          echo "=== downloaded subtitle candidates ==="
+          find "$HOME/Downloads" -type f -name '*.txt' -print 2>/dev/null || true
+          find "$HOME/Downloads" -type f -name '*.txt' -exec cp {} output/ \; 2>/dev/null || true
+
+          echo
           echo "=== Bili23 MCP log ==="
           tail -n 160 /tmp/bili23-mcp.log || true
           kill "$APP_PID" 2>/dev/null || true
