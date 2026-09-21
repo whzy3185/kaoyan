@@ -51,7 +51,7 @@ jobs:
       - name: Bili23 MCP smoke test
         continue-on-error: true
         run: |
-          BIN="$(find .tools/bili23 -maxdepth 4 -type f -perm -111 \\( -iname '*bili23*' -o -iname '*downloader*' \\) | head -n 1)"
+          BIN=".tools/bili23/Bili23-Downloader/bili23-downloader"
           echo "BIN=$BIN"
           test -n "$BIN" || exit 0
 
