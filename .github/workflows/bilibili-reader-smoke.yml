@@ -20,7 +20,7 @@ permissions:
 jobs:
   fetch:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     env:
       BILIBILI_SESSDATA: ${{ secrets.BILIBILI_SESSDATA }}
     steps:
@@ -28,13 +28,40 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
       - name: Install yt-dlp fallback
         run: python -m pip install -U yt-dlp
+
+      - name: Install official Bili23 Downloader portable
+        run: |
+          mkdir -p .tools/bili23
+          curl -L --fail --retry 3             -o /tmp/bili23.tar.gz             https://github.com/ScottSloan/Bili23-Downloader/releases/download/v2.15.0/Bili23-Downloader_2.15.0_linux_amd64_portable.tar.gz
+          echo "7590fd0954fda7da4d1e387c714066ef81076d058d9004538e40b033f059f859  /tmp/bili23.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/bili23.tar.gz -C .tools/bili23
+          echo "=== Bili23 portable contents ==="
+          find .tools/bili23 -maxdepth 3 -type f -printf '%p\n' | head -n 100
+          echo "=== executable candidates ==="
+          find .tools/bili23 -maxdepth 4 -type f -perm -111 -printf '%p\n' | head -n 50
+
+      - name: Bili23 headless startup smoke
+        continue-on-error: true
+        run: |
+          BIN="$(find .tools/bili23 -maxdepth 4 -type f -perm -111 \( -iname '*bili23*' -o -iname '*downloader*' \) | head -n 1)"
+          echo "BIN=$BIN"
+          if [ -n "$BIN" ]; then
+            timeout 8s env QT_QPA_PLATFORM=offscreen "$BIN" > /tmp/bili23-main.log 2>&1 || true
+            echo "=== Bili23 startup log ==="
+            cat /tmp/bili23-main.log || true
+            echo "=== config candidates ==="
+            find "$HOME" -type f \( -name config.json -o -name '*.json' \) 2>/dev/null | grep -i 'bili23\|downloader' | head -n 20 || true
+          fi
+
       - name: Fetch subtitles
         continue-on-error: true
         run: |
           SOURCE="${{ github.event.inputs.source || 'https://www.bilibili.com/video/BV1BcXQYUEiL/' }}"
           python tools/bilibili_reader/fetch_subtitles.py "$SOURCE" --out output
+
       - name: Show diagnostics
         if: always()
         run: |
@@ -42,6 +69,7 @@ jobs:
           test -f output/errors.txt && cat output/errors.txt || true
           test -f output/yt-dlp.log && tail -n 120 output/yt-dlp.log || true
           test -f output/metadata.json && cat output/metadata.json || true
+
       - name: Upload result
         if: always()
         uses: actions/upload-artifact@v4
