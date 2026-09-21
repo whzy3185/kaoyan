@@ -1,4 +1,36 @@
-# 408 真题
+# Bilibili 字幕读取工具
+
+统一入口：
+
+```bash
+python tools/bilibili_reader/fetch_subtitles.py BV1xxxxxxxx --out /tmp/bilibili-output
+```
+
+工具会先读取完整分P元数据与 B站字幕轨，再按需回退到 `yt-dlp`。`metadata.json` 记录总P数、CID、标题、时长、逐P字幕状态、字幕来源和完整性；只有全部分P均成功读取时，公开 API 路径才返回成功。
+
+若 AI 字幕只对登录用户可见，可显式启用一次性扫码登录：
+
+```bash
+python -m pip install 'qrcode[pil]'
+python tools/bilibili_reader/fetch_subtitles.py BV1xxxxxxxx --out /tmp/bilibili-output --qr-login
+```
+
+扫码登录的 Cookie 只保存在当前进程内存中，不写入输出目录或 Git。二维码图片写入系统临时目录，登录成功、超时或失败后自动删除。
+
+也可复用本机已登录的 Chrome / Edge 会话：
+
+```bash
+python -m pip install browser-cookie3
+python tools/bilibili_reader/fetch_subtitles.py BV1xxxxxxxx --out /tmp/bilibili-output --cookies-from-browser edge
+```
+
+该模式只读取 `.bilibili.com` Cookie，并仅在当前进程内存中构造请求头；Cookie 值不会打印或写入文件。
+
+长任务若需避免 macOS 密钥链反复授权，可通过 `--cookies-file` 读取一个权限受限的临时 Netscape Cookie 文件。该文件必须位于系统临时目录，并在任务结束后立即删除；禁止放入仓库、下载目录或长期缓存。
+
+也可继续使用既有环境变量 `BILIBILI_SESSDATA`。禁止把该变量、Cookie、二维码或浏览器配置提交到仓库。
+
+## 408 真题基线
 
 本分支专门维护 **计算机 408 统考真题**，当前覆盖 **2009—2023 年**。
 
