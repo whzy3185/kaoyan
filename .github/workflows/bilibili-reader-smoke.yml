@@ -48,18 +48,65 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends libegl1 libgl1 libopengl0 libxkbcommon0 libdbus-1-3 libfontconfig1 libfreetype6
 
-      - name: Bili23 headless startup smoke
+      - name: Bili23 MCP smoke test
         continue-on-error: true
         run: |
-          BIN="$(find .tools/bili23 -maxdepth 4 -type f -perm -111 \( -iname '*bili23*' -o -iname '*downloader*' \) | head -n 1)"
+          BIN="$(find .tools/bili23 -maxdepth 4 -type f -perm -111 \\( -iname '*bili23*' -o -iname '*downloader*' \\) | head -n 1)"
           echo "BIN=$BIN"
-          if [ -n "$BIN" ]; then
-            timeout 8s env QT_QPA_PLATFORM=offscreen "$BIN" > /tmp/bili23-main.log 2>&1 || true
-            echo "=== Bili23 startup log ==="
-            cat /tmp/bili23-main.log || true
-            echo "=== config candidates ==="
-            find "$HOME" -type f \( -name config.json -o -name '*.json' \) 2>/dev/null | grep -i 'bili23\|downloader' | head -n 20 || true
+          test -n "$BIN" || exit 0
+
+          # First boot creates the application configuration.
+          timeout 4s env QT_QPA_PLATFORM=offscreen "$BIN" > /tmp/bili23-firstboot.log 2>&1 || true
+
+          CONFIG="$HOME/.local/share/Bili23 Downloader/config.json"
+          echo "CONFIG=$CONFIG"
+          if [ ! -f "$CONFIG" ]; then
+            echo "Bili23 config was not created"
+            cat /tmp/bili23-firstboot.log || true
+            exit 0
           fi
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path.home()/".local/share/Bili23 Downloader/config.json"
+          d=json.loads(p.read_text(encoding="utf-8"))
+          d.setdefault("MCP",{})
+          d["MCP"]["mcp_enabled"]=True
+          d["MCP"]["mcp_port"]=23330
+          d["MCP"]["mcp_token"]="smoke-token"
+          p.write_text(json.dumps(d,ensure_ascii=False,indent=2),encoding="utf-8")
+          print("MCP config:", d.get("MCP"))
+          PY
+
+          env QT_QPA_PLATFORM=offscreen "$BIN" > /tmp/bili23-mcp.log 2>&1 &
+          APP_PID=$!
+          trap 'kill $APP_PID 2>/dev/null || true' EXIT
+
+          for i in $(seq 1 20); do
+            if curl -s -o /dev/null -X POST               -H 'Authorization: Bearer smoke-token'               -H 'Content-Type: application/json'               --data '{"jsonrpc":"2.0","id":1,"method":"ping","params":{}}'               http://127.0.0.1:23330/mcp; then
+              break
+            fi
+            sleep 0.5
+          done
+
+          echo "=== initialize ==="
+          curl -sS -X POST             -H 'Authorization: Bearer smoke-token'             -H 'Content-Type: application/json'             --data '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"smoke","version":"1"}}}'             http://127.0.0.1:23330/mcp | tee /tmp/bili23-initialize.json || true
+
+          echo
+          echo "=== tools/list ==="
+          curl -sS -X POST             -H 'Authorization: Bearer smoke-token'             -H 'Content-Type: application/json'             --data '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'             http://127.0.0.1:23330/mcp | tee /tmp/bili23-tools.json || true
+
+          echo
+          echo "=== parse_url ==="
+          curl -sS -X POST             -H 'Authorization: Bearer smoke-token'             -H 'Content-Type: application/json'             --data '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"parse_url","arguments":{"url":"https://www.bilibili.com/video/BV1BcXQYUEiL/","limit":20}}}'             http://127.0.0.1:23330/mcp | tee /tmp/bili23-parse.json || true
+
+          echo
+          echo "=== Bili23 MCP log ==="
+          tail -n 160 /tmp/bili23-mcp.log || true
+          kill "$APP_PID" 2>/dev/null || true
+          wait "$APP_PID" 2>/dev/null || true
+          trap - EXIT
 
       - name: Fetch subtitles
         continue-on-error: true
