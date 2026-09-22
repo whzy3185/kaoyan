@@ -1,0 +1,19 @@
+{
+  "title": "2027 计算机网络考研复习指导",
+  "file": "2027计算机网络_高清带书签版.pdf",
+  "pages": 316,
+  "bytes": 197045739,
+  "sha256": "c6fa0b7820c87d5bc006945ecfb19e0d9f29070e060cfd80837b302af42d1630",
+  "bookmark_entries": 419,
+  "chapters": [
+    {"title":"第1章 计算机网络体系结构","start":13,"end":41},
+    {"title":"第2章 物理层","start":42,"end":61},
+    {"title":"第3章 数据链路层","start":62,"end":138},
+    {"title":"第4章 网络层","start":139,"end":235},
+    {"title":"第5章 传输层","start":236,"end":278},
+    {"title":"第6章 应用层","start":279,"end":316}
+  ],
+  "exercise_summary_markers": 62,
+  "text_layer": "sparse_or_unusable",
+  "parse_method": "PDF bookmarks + full page open audit; exact figures/formulas remain in source PDF"
+}
