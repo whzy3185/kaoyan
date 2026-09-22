@@ -1,0 +1,22 @@
+{
+  "title": "2027 数据结构考研复习指导",
+  "file": "2027数据结构_高清带书签版.pdf",
+  "pages": 404,
+  "bytes": 211679786,
+  "sha256": "2a2fe3b77080ac615b5503d0e3b8b3dc5c23e7b0ef1cd462e4cf4fb23ec6be30",
+  "bookmark_entries": 478,
+  "chapters": [
+    {"title":"第1章 绪论","start":13,"end":24},
+    {"title":"第2章 线性表","start":25,"end":74},
+    {"title":"第3章 栈、队列和数组","start":75,"end":120},
+    {"title":"第4章 串","start":121,"end":135},
+    {"title":"第5章 树与二叉树","start":136,"end":206},
+    {"title":"第6章 图","start":207,"end":276},
+    {"title":"第7章 查找","start":277,"end":345},
+    {"title":"第8章 排序","start":346,"end":404}
+  ],
+  "exercise_summary_markers": 76,
+  "bookmark_anomalies": ["第8章末归纳总结指向PDF p.1","第8章末思维拓展指向PDF p.1"],
+  "text_layer": "sparse_or_unusable",
+  "parse_method": "PDF bookmarks + full page open audit; exact figures/formulas remain in source PDF"
+}
