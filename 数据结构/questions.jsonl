@@ -191,3 +191,4 @@
 {"id":"DS-2023-10","year":2023,"question_no":10,"type":"choice","topic":"排序","subtopic":"排序性质、稳定性与算法识别","summary":"从希尔、归并、快速、堆、基数排序中判断哪些是不稳定排序。","source_branch":"408真题","source_path":"数据结构/按知识点/08-排序.md"}
 {"id":"DS-2023-11","year":2023,"question_no":11,"type":"choice","topic":"排序","subtopic":"快速排序","summary":"快速排序对给定数组进行升序排序，判断第一次划分后的可能结果。","source_branch":"408真题","source_path":"数据结构/按知识点/08-排序.md"}
 {"id":"DS-2023-42","year":2023,"question_no":42,"type":"comprehensive","topic":"排序","subtopic":"外部排序","summary":"外部排序的置换-选择法：给定工作区容量生成初始归并段，并分析首个归并段长度的最大值和最小值。","source_branch":"408真题","source_path":"数据结构/按知识点/08-排序.md"}
+{"id":"DS-2014-42","year":2014,"question_no":42,"type":"comprehensive","topic":"图","subtopic":"图的存储与最短路径","summary":"以 OSPF 链路状态信息为背景，将网络抽象为图，设计链式存储结构保存 LSI，并按 Dijkstra 策略给出 R1 到各子网的最短路径及费用。","source_branch":"408真题","source_path":"数据结构/按知识点/06-图.md"}
